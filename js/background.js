@@ -211,3 +211,91 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   GithubClient.github.handleCallback(request.code);
   sendResponse();
 });
+
+
+/**
+ * Offscreen document lifecycle (Manifest V3).
+ *
+ * MV3 removed the persistent background page, so the audio player has no DOM to
+ * live in. chrome.offscreen provides one: an invisible document that this
+ * service worker creates and that survives the UI tab being closed. The
+ * AUDIO_PLAYBACK reason is what keeps it (and this worker) alive while a track
+ * is playing.
+ *
+ * Only one offscreen document may exist per extension, so creation is
+ * serialised through a single in-flight promise.
+ */
+
+const OFFSCREEN_PATH = 'offscreen.html';
+let creatingOffscreenDocument = null;
+
+async function hasOffscreenDocument() {
+  if (!chrome.offscreen) {
+    return false;
+  }
+  // getContexts is the supported check from Chromium 116 on.
+  if (chrome.runtime.getContexts) {
+    const contexts = await chrome.runtime.getContexts({
+      contextTypes: ['OFFSCREEN_DOCUMENT'],
+      documentUrls: [chrome.runtime.getURL(OFFSCREEN_PATH)],
+    });
+    return contexts.length > 0;
+  }
+  return false;
+}
+
+async function ensureOffscreenDocument() {
+  if (!chrome.offscreen) {
+    // Browser too old for the offscreen API. The UI falls back to playing in
+    // the page itself, so report failure instead of throwing.
+    return false;
+  }
+
+  if (await hasOffscreenDocument()) {
+    return true;
+  }
+
+  if (creatingOffscreenDocument) {
+    await creatingOffscreenDocument;
+    return true;
+  }
+
+  creatingOffscreenDocument = chrome.offscreen.createDocument({
+    url: OFFSCREEN_PATH,
+    reasons: ['AUDIO_PLAYBACK'],
+    justification:
+      'Play music in the background so playback survives closing the UI tab.',
+  });
+
+  try {
+    await creatingOffscreenDocument;
+    return true;
+  } catch (err) {
+    // A concurrent call may have won the race. Chromium reports that as
+    // "Only a single offscreen document may be created", which means the
+    // document we wanted already exists -- success, not failure. This also
+    // covers browsers without runtime.getContexts(), where hasOffscreenDocument
+    // cannot confirm it any other way.
+    const message = (err && err.message) || '';
+    if (message.indexOf('single offscreen document') !== -1) {
+      return true;
+    }
+    return hasOffscreenDocument();
+  } finally {
+    creatingOffscreenDocument = null;
+  }
+}
+
+// The UI asks for the offscreen document to exist before it sends any player
+// command. Kept separate from the 'code' listener above so the OAuth path is
+// untouched.
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (!request || request.type !== 'L1_ENSURE_OFFSCREEN') {
+    return undefined;
+  }
+  ensureOffscreenDocument().then((ok) => {
+    sendResponse({ ok });
+  });
+  // Keep the message channel open for the async reply.
+  return true;
+});

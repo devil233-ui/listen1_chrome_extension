@@ -1,10 +1,18 @@
 /* eslint-disable no-param-reassign */
-/* global isElectron getPlayer getPlayerAsync addPlayerListener getLocalStorageValue */
+/* global isElectron getPlayer getPlayerAsync addPlayerListener getLocalStorageValue resolvePlayerMode initOffscreenBridge */
 {
-  const mode =
+  const mode = resolvePlayerMode(
     isElectron() || getLocalStorageValue('enable_stop_when_close', true)
       ? 'front'
-      : 'background';
+      : 'background'
+  );
+
+  // Only spin up the offscreen document when playback is actually meant to
+  // outlive this tab. In front mode the in-page player is used and no second
+  // document is needed.
+  if (mode === 'background') {
+    initOffscreenBridge();
+  }
 
   const myPlayer = getPlayer(mode);
   const l1Player = {
@@ -26,6 +34,13 @@
     },
     togglePlayPause() {
       getPlayerAsync(mode, (player) => {
+        // In background mode the player lives in another document, so the
+        // playing/paused decision is made there to avoid acting on a stale
+        // mirror value.
+        if (typeof player.togglePlayPause === 'function') {
+          player.togglePlayPause();
+          return;
+        }
         if (player.playing) {
           player.pause();
         } else {
@@ -81,6 +96,10 @@
     },
     toggleMute() {
       getPlayerAsync(mode, (player) => {
+        if (typeof player.toggleMute === 'function') {
+          player.toggleMute();
+          return;
+        }
         if (player.muted) player.unmute();
         else player.mute();
       });
@@ -132,6 +151,13 @@
     },
     connectPlayer() {
       getPlayerAsync(mode, (player) => {
+        // Under MV3 the player lives in the offscreen document, so the restore
+        // decision (which depends on live playing/playlist state) is made there
+        // instead of over a racy sequence of cross-document reads.
+        if (typeof player.connectPlayer === 'function') {
+          player.connectPlayer();
+          return;
+        }
         if (!player.playing) {
           // load local storage settings
           if (!player.playlist.length) {

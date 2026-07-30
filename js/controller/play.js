@@ -2,7 +2,7 @@
 /* eslint-disable no-shadow */
 /* eslint-disable import/no-unresolved */
 /* eslint-disable global-require */
-/* global angular notyf i18next MediaService l1Player hotkeys GithubClient isElectron require getLocalStorageValue getPlayer getPlayerAsync addPlayerListener smoothScrollTo lastfm */
+/* global angular notyf i18next MediaService l1Player hotkeys GithubClient isElectron require getLocalStorageValue getPlayer getPlayerAsync addPlayerListener resolvePlayerMode smoothScrollTo lastfm */
 
 function getCSSStringFromSetting(setting) {
   let { backgroundAlpha } = setting;
@@ -479,10 +479,11 @@ angular.module('listenone').controller('PlayController', [
 
       return result;
     }
-    const mode =
+    const mode = resolvePlayerMode(
       isElectron() || getLocalStorageValue('enable_stop_when_close', true)
         ? 'front'
-        : 'background';
+        : 'background'
+    );
 
     getPlayer(mode).setMode(mode);
     if (mode === 'front') {

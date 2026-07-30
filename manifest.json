@@ -18,7 +18,8 @@
     "notifications",
     "unlimitedStorage",
     "cookies",
-    "declarativeNetRequest"
+    "declarativeNetRequest",
+    "offscreen"
   ],
   "declarative_net_request": {
     "rule_resources": [
