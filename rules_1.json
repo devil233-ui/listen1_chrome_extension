@@ -19,7 +19,8 @@
     },
     "condition": {
       "urlFilter": "|*.y.qq.com",
-      "resourceTypes": ["main_frame", "xmlhttprequest"]
+      "resourceTypes": ["xmlhttprequest"],
+      "excludedInitiatorDomains": ["qq.com"]
     }
   },
   {
@@ -37,7 +38,8 @@
     },
     "condition": {
       "urlFilter": "|*.kugou.com",
-      "resourceTypes": ["main_frame", "xmlhttprequest"]
+      "resourceTypes": ["xmlhttprequest"],
+      "excludedInitiatorDomains": ["kugou.com"]
     }
   },
   {
