@@ -10,25 +10,27 @@ const providerSource = fs.readFileSync(
   'utf8'
 );
 const requests = [];
-const forbidden = Object.assign(new Error('Request failed with status code 403'), {
-  response: { status: 403 },
-});
-const firstRequest = {
-  then() {
-    return this;
-  },
-  catch(handler) {
-    return handler(forbidden);
-  },
-};
+const lyric = '[00:00.00]primary lyric';
+const translatedLyric = '[00:00.00]translated lyric';
 const context = {
   axios: {
-    get(url) {
-      requests.push(url);
-      if (requests.length === 1) return firstRequest;
-      return Promise.resolve({ data: { lyric: 'primary lyric', trans: '' } });
+    post(url, data) {
+      requests.push({ url, data });
+      return Promise.resolve({
+        data: {
+          req_1: {
+            code: 0,
+            data: {
+              lyric: Buffer.from(lyric).toString('base64'),
+              trans: Buffer.from(translatedLyric).toString('base64'),
+            },
+          },
+        },
+      });
     },
   },
+  atob: (value) => Buffer.from(value, 'base64').toString('binary'),
+  TextDecoder,
   getParameterByName: () => 'qqtrack_003KI9992I7WpG',
 };
 
@@ -41,9 +43,14 @@ const request = context.qqProvider
   });
 
 await request;
-assert.equal(requests.length, 2, '403 must trigger exactly one fallback request');
-assert.match(requests[0], /^https:\/\/c\.y\.qq\.com\//);
-assert.match(requests[1], /^https:\/\/i\.y\.qq\.com\//);
-assert.equal(lyricResult.lyric, 'primary lyric');
-assert.equal(lyricResult.tlyric, '');
-console.log('PASS: QQ lyric 403 falls back from c.y.qq.com to i.y.qq.com');
+assert.equal(requests.length, 1, 'QQ lyric must use one modern API request');
+assert.equal(requests[0].url, 'https://u.y.qq.com/cgi-bin/musicu.fcg');
+assert.equal(
+  requests[0].data.req_1.module,
+  'music.musichallSong.PlayLyricInfo'
+);
+assert.equal(requests[0].data.req_1.method, 'GetPlayLyricInfo');
+assert.equal(requests[0].data.req_1.param.songMID, '003KI9992I7WpG');
+assert.equal(lyricResult.lyric, lyric);
+assert.equal(lyricResult.tlyric, translatedLyric);
+console.log('PASS: QQ lyric uses musicu API and decodes base64 lyrics');

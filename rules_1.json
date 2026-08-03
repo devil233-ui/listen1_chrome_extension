@@ -13,12 +13,12 @@
         {
           "header": "origin",
           "operation": "set",
-          "value": "https://y.qq.com/"
+          "value": "https://y.qq.com"
         }
       ]
     },
     "condition": {
-      "urlFilter": "|*.y.qq.com",
+      "requestDomains": ["y.qq.com"],
       "resourceTypes": ["xmlhttprequest"],
       "excludedInitiatorDomains": ["qq.com"]
     }
