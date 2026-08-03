@@ -515,15 +515,23 @@ class qq {
     // eslint-disable-line no-unused-vars
     const track_id = getParameterByName('track_id', url).split('_').pop();
     // use chrome extension to modify referer.
-    const target_url =
-      'https://i.y.qq.com/lyric/fcgi-bin/fcg_query_lyric_new.fcg?' +
+    const lyric_path =
+      '/lyric/fcgi-bin/fcg_query_lyric_new.fcg?' +
       `songmid=${track_id}&g_tk=5381&format=json&inCharset=utf8&outCharset=utf-8&nobase64=1`;
+    const target_url = `https://c.y.qq.com${lyric_path}`;
+    const fallback_url = `https://i.y.qq.com${lyric_path}`;
     return {
       success: (fn) => {
-        axios.get(target_url).then((response) => {
+        const request = axios.get(target_url).catch((error) => {
+          if (error.response && error.response.status === 403) {
+            return axios.get(fallback_url);
+          }
+          return Promise.reject(error);
+        });
+        return request.then((response) => {
           const { data } = response;
           const lrc = data.lyric || '';
-          const tlrc = data.trans.replace(/\/\//g, '') || '';
+          const tlrc = (data.trans || '').replace(/\/\//g, '');
           return fn({
             lyric: lrc,
             tlyric: tlrc,
