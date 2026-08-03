@@ -300,7 +300,7 @@ https://stackoverflow.com/questions/19889615/can-an-angular-directive-pass-argum
   height: 32px;
   padding: 0 10px;
   position: absolute;
-  right: 6px;
+  left: 6px;
   top: 52px;
   white-space: nowrap;
   z-index: 160;
