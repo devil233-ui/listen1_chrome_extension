@@ -1473,7 +1473,7 @@
                                 </p>
                                 <p>{{_DESIGNER}} ({{_THEME_WHITE}}): iparanoid </p>
                                 <p>{{_DESIGNER}} ({{_THEME_MODERN_BLACK}}, {{_THEME_MODERN_WHITE}}): 814959822, Antion</p>
-                                <p>{{_VERSION}}: v2.33.0 {{_LICENSE_NOTICE}}</p>
+                                <p>{{_VERSION}}: {{buildVersion}} {{_LICENSE_NOTICE}}</p>
                                 <p ng-show='lastestVersion!=""'>
                                   {{_LATEST_VERSION}}: {{lastestVersion}}
                                 </p>
@@ -3551,7 +3551,7 @@
                               </p>
                               <p>{{_DESIGNER}} ({{_THEME_WHITE}}): iparanoid </p>
                               <p>{{_DESIGNER}} ({{_THEME_MODERN_BLACK}}, {{_THEME_MODERN_WHITE}}): 814959822, Antion</p>
-                              <p>{{_VERSION}}: v2.33.0 {{_LICENSE_NOTICE}}</p>
+                              <p>{{_VERSION}}: {{buildVersion}} {{_LICENSE_NOTICE}}</p>
                               <p ng-show='lastestVersion!=""'>
                                 {{_LATEST_VERSION}}: {{lastestVersion}}
                               </p>
@@ -3954,6 +3954,7 @@
                   </div>
                 </div>
                     <div class="footerwrap">
+                    <span class="version-badge" title="当前加载的自用构建版本">{{buildVersion}}</span>
                     <div class="left-control" ng-class="{slidedown: window_type=='track'}">
                   
                     <div class="playlist-toggle">

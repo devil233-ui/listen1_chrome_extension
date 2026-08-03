@@ -7,6 +7,9 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-unresolved */
 
+// 自用构建版本标识（手动维护，与 git 提交对应）
+const BUILD_VERSION = "v2.33.0-dev-473ea0e";
+
 const sourceList = [
   {
     name: 'netease',
@@ -52,7 +55,9 @@ const main = () => {
 
   app.run([
     '$q',
-    ($q) => {
+    '$rootScope',
+    ($q, $rootScope) => {
+      $rootScope.buildVersion = BUILD_VERSION;
       axios.Axios.prototype.request_original = axios.Axios.prototype.request;
       axios.Axios.prototype.request = function new_req(config) {
         return $q.when(this.request_original(config));

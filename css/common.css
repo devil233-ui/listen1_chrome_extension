@@ -1837,3 +1837,20 @@ svg.searchspinner {
   pointer-events: none;
   display: block;
 }
+
+/* 常驻版本角标：显示当前加载的自用构建版本 */
+.version-badge {
+  position: absolute;
+  right: 14px;
+  top: 8px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-subtitle-color);
+  opacity: 0.55;
+  pointer-events: none;
+  user-select: none;
+  z-index: 5;
+}
+.footerwrap {
+  position: relative;
+}
