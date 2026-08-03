@@ -172,6 +172,7 @@ svg {
   flex: 0 0 46px;
   border-bottom: solid 1px var(--line-default-color);
   display: flex;
+  position: relative;
   align-items: center;
   -webkit-app-region: drag;
 }
@@ -283,6 +284,59 @@ https://stackoverflow.com/questions/19889615/can-an-angular-directive-pass-argum
 
 .navigation .settings {
   flex: 0 0 32px;
+}
+
+.navigation .build-status {
+  align-items: center;
+  background: linear-gradient(135deg, #343066, #1d2144);
+  border: solid 1px #7562e8;
+  border-radius: 999px;
+  box-shadow: 0 4px 14px rgba(71, 58, 168, 0.35);
+  color: #f5f3ff;
+  cursor: pointer;
+  display: flex;
+  font-size: 12px;
+  gap: 6px;
+  height: 32px;
+  padding: 0 10px;
+  position: absolute;
+  right: 6px;
+  top: 52px;
+  white-space: nowrap;
+  z-index: 160;
+  -webkit-app-region: no-drag;
+}
+.navigation .build-status:hover {
+  border-color: #a99dff;
+  box-shadow: 0 5px 18px rgba(91, 72, 216, 0.5);
+  transform: translateY(-1px);
+}
+.build-status-dot {
+  background: #8c6cff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #8c6cff;
+  height: 7px;
+  width: 7px;
+}
+.build-status-dot.dirty {
+  background: #ffad5c;
+  box-shadow: 0 0 8px #ffad5c;
+}
+.build-status-label {
+  font-weight: 700;
+}
+.build-status-separator {
+  color: #a9a5ca;
+}
+.build-status-dirty {
+  color: #ffb56d;
+  font-weight: 700;
+}
+.build-status-copy {
+  color: #d4cffd;
+  font-size: 15px;
+  line-height: 1;
+  margin-left: 1px;
 }
 
 .navigation .icon {
@@ -1838,19 +1892,6 @@ svg.searchspinner {
   display: block;
 }
 
-/* 常驻版本角标：显示当前加载的自用构建版本 */
-.version-badge {
-  position: absolute;
-  right: 14px;
-  top: 8px;
-  font-size: 11px;
-  line-height: 1;
-  color: var(--text-subtitle-color);
-  opacity: 0.55;
-  pointer-events: none;
-  user-select: none;
-  z-index: 5;
-}
 .footerwrap {
   position: relative;
 }

@@ -6,3 +6,6 @@
 node_modules
 dist
 _metadata
+
+# 每台机器在重载扩展前生成，不能参与提交。
+js/build-version.js

@@ -7,8 +7,16 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable import/no-unresolved */
 
-// 自用构建版本标识（手动维护，与 git 提交对应）
-const BUILD_VERSION = "v2.33.0-dev-473ea0e";
+// 自用构建版本标识（由 npm run stamp-version 在构建前生成）
+const BUILD_VERSION = window.LISTEN1_BUILD_VERSION || 'v2.33.0-dev-unversioned';
+const buildVersionMatch = BUILD_VERSION.match(/^(v[^-]+)-dev-([a-f0-9]+)(-dirty)?$/);
+const BUILD_VERSION_STATUS = buildVersionMatch
+  ? {
+      version: buildVersionMatch[1],
+      commit: buildVersionMatch[2],
+      dirty: Boolean(buildVersionMatch[3]),
+    }
+  : { version: BUILD_VERSION, commit: '', dirty: false };
 
 const sourceList = [
   {
@@ -58,6 +66,13 @@ const main = () => {
     '$rootScope',
     ($q, $rootScope) => {
       $rootScope.buildVersion = BUILD_VERSION;
+      $rootScope.buildVersionStatus = BUILD_VERSION_STATUS;
+      $rootScope.copyBuildVersion = () => {
+        const clipboard = window.navigator && window.navigator.clipboard;
+        if (clipboard && clipboard.writeText) {
+          clipboard.writeText(BUILD_VERSION).catch(() => {});
+        }
+      };
       axios.Axios.prototype.request_original = axios.Axios.prototype.request;
       axios.Axios.prototype.request = function new_req(config) {
         return $q.when(this.request_original(config));
