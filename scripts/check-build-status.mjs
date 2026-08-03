@@ -14,20 +14,38 @@ const checks = [
   ['two top navigation statuses', count(html, /class="build-status"/g) === 2],
   [
     'statuses are hidden on the lyric page',
-    count(html, /ng-if="window_type !== 'track'"/g) === 2,
+    count(html, /ng-if="window_type !== 'track'(?: && isOpenSidebar)?"/g) ===
+      2,
   ],
   ['no footer version badges', count(html, /class="version-badge"/g) === 0],
   [
+    'statuses live in the reserved sidebar header',
+    count(
+      html,
+      /<div class="menu-control">\s*<div\s+class="build-status"/g
+    ) === 2,
+  ],
+  [
     'classic-theme status is top-left',
-    /\.navigation \.build-status \{[\s\S]*?left: 6px;[\s\S]*?top: 52px;/.test(
+    /\.sidebar \.build-status \{[^}]*left: 8px;[^}]*max-width: calc\(100% - 16px\);[^}]*top: 7px;/.test(
       commonCss
     ),
   ],
   [
     'modern-theme status is top-left',
-    /\.navigation \.build-status \{[\s\S]*?left: 6px;[\s\S]*?top: 58px;/.test(
+    /\.sidebar \.build-status \{[^}]*left: 8px;[^}]*max-width: calc\(100% - 16px\);[^}]*top: 23px;/.test(
       common2Css
     ),
+  ],
+  [
+    'sidebar headers provide the full available width',
+    /\.sidebar \.menu-control \{[^}]*width: 100%;/.test(commonCss) &&
+      /\.sidebar \.menu-control \{[^}]*width: 100%;/.test(common2Css),
+  ],
+  [
+    'status no longer occupies navigation content',
+    !commonCss.includes('.navigation .build-status') &&
+      !common2Css.includes('.navigation .build-status'),
   ],
   [
     'jump button is limited to playlist tracks',

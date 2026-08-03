@@ -269,6 +269,8 @@ svg {
 }
 .sidebar .menu-control {
   height: 74px;
+  width: 100%;
+  position: relative;
   -webkit-app-region: drag;
 }
 
@@ -400,27 +402,30 @@ https://stackoverflow.com/questions/19889615/can-an-angular-directive-pass-argum
   margin-right: 8px;
 }
 
-.navigation .build-status {
+.sidebar .build-status {
   align-items: center;
   background: linear-gradient(135deg, #343066, #1d2144);
   border: solid 1px #7562e8;
   border-radius: 999px;
+  box-sizing: border-box;
   box-shadow: 0 4px 14px rgba(71, 58, 168, 0.35);
   color: #f5f3ff;
   cursor: pointer;
   display: flex;
-  font-size: 12px;
-  gap: 6px;
-  height: 32px;
-  padding: 0 10px;
+  font-size: 11px;
+  gap: 3px;
+  height: 28px;
+  left: 8px;
+  max-width: calc(100% - 16px);
+  overflow: hidden;
+  padding: 0 7px;
   position: absolute;
-  left: 6px;
-  top: 58px;
+  top: 23px;
   white-space: nowrap;
   z-index: 160;
   -webkit-app-region: no-drag;
 }
-.navigation .build-status:hover {
+.sidebar .build-status:hover {
   border-color: #a99dff;
   box-shadow: 0 5px 18px rgba(91, 72, 216, 0.5);
   transform: translateY(-1px);
@@ -448,7 +453,7 @@ https://stackoverflow.com/questions/19889615/can-an-angular-directive-pass-argum
 }
 .build-status-copy {
   color: #d4cffd;
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1;
   margin-left: 1px;
 }
