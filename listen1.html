@@ -20,12 +20,11 @@
 
     <link href="images/logo_16.png" rel="shortcut icon" />
     <link href="images/logo_16.png" rel="bookmark" />
-    <script>
-      if (typeof module === 'object') {
-        window.module = module;
-        module = undefined;
-      }
-    </script>
+    <script
+      type="text/javascript"
+      src="js/module-bridge.js"
+      data-module-bridge="capture"
+    ></script>
     
     <script type="text/javascript" src="js/vendor/angular.min.js"></script>
     <script src="js/vendor/i18next.min.js"></script>
@@ -73,9 +72,11 @@
       type="text/javascript"
       src="js/controller/instant_search.js"
     ></script>
-    <script>
-      if (window.module) module = window.module;
-    </script>
+    <script
+      type="text/javascript"
+      src="js/module-bridge.js"
+      data-module-bridge="restore"
+    ></script>
 
   </head>
 

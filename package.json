@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "check-build-status": "node scripts/check-build-status.mjs",
+    "check-csp-inline": "node scripts/check-csp-inline.mjs",
     "stamp-version": "node scripts/stamp-build-version.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
