@@ -18,7 +18,7 @@
       ]
     },
     "condition": {
-      "requestDomains": ["y.qq.com"],
+      "urlFilter": "||y.qq.com/",
       "resourceTypes": ["xmlhttprequest"],
       "excludedInitiatorDomains": ["qq.com"]
     }
