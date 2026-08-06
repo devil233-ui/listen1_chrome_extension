@@ -198,7 +198,6 @@ chrome.action.onClicked.addListener((tab) => {
 //   );
 // }
 
-
 /**
  * Get tokens.
  */
@@ -211,7 +210,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   GithubClient.github.handleCallback(request.code);
   sendResponse();
 });
-
 
 /**
  * Offscreen document lifecycle (Manifest V3).
@@ -228,6 +226,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 const OFFSCREEN_PATH = 'offscreen.html';
 let creatingOffscreenDocument = null;
+let waitingForOffscreenReady = false;
+const pendingPlayerCommands = [];
 
 async function hasOffscreenDocument() {
   if (!chrome.offscreen) {
@@ -286,6 +286,34 @@ async function ensureOffscreenDocument() {
   }
 }
 
+async function ensureAndDispatchPlayerCommands() {
+  if (waitingForOffscreenReady) {
+    return;
+  }
+
+  if (await hasOffscreenDocument()) {
+    const commands = pendingPlayerCommands.splice(0);
+    commands.forEach((command) => {
+      chrome.runtime
+        .sendMessage({ type: 'L1_PLAYER_CMD', ...command })
+        .catch(() => {
+          // The document can be reclaimed between the context check and this
+          // dispatch. Keep the command so the next ready event can retry it.
+          pendingPlayerCommands.unshift(command);
+          waitingForOffscreenReady = false;
+        });
+    });
+    return;
+  }
+
+  waitingForOffscreenReady = true;
+  const created = await ensureOffscreenDocument();
+  if (!created) {
+    waitingForOffscreenReady = false;
+    pendingPlayerCommands.length = 0;
+  }
+}
+
 // The UI asks for the offscreen document to exist before it sends any player
 // command. Kept separate from the 'code' listener above so the OAuth path is
 // untouched.
@@ -298,4 +326,32 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   });
   // Keep the message channel open for the async reply.
   return true;
+});
+
+// Player commands first wake the service worker. This keeps resume working
+// after Chromium reclaims an idle AUDIO_PLAYBACK offscreen document.
+chrome.runtime.onMessage.addListener((request) => {
+  if (!request || typeof request.type !== 'string') {
+    return undefined;
+  }
+
+  if (request.type === 'L1_OFFSCREEN_READY') {
+    waitingForOffscreenReady = false;
+    ensureAndDispatchPlayerCommands();
+    chrome.runtime
+      .sendMessage({ type: 'BG_PLAYER:OFFSCREEN_READY' })
+      .catch(() => {});
+    return undefined;
+  }
+
+  if (request.type !== 'L1_PLAYER_COMMAND') {
+    return undefined;
+  }
+
+  pendingPlayerCommands.push({
+    method: request.method,
+    args: Array.isArray(request.args) ? request.args : [],
+  });
+  ensureAndDispatchPlayerCommands();
+  return undefined;
 });

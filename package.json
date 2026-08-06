@@ -6,7 +6,10 @@
   "scripts": {
     "check-build-status": "node scripts/check-build-status.mjs",
     "check-csp-inline": "node scripts/check-csp-inline.mjs",
+    "check-offscreen-resume": "node scripts/check-offscreen-resume.mjs",
+    "check-player-resume": "node scripts/check-player-resume.mjs",
     "check-qq-lyric-fallback": "node scripts/check-qq-lyric-fallback.mjs",
+    "lint": "eslint js --ext .js",
     "stamp-version": "node scripts/stamp-build-version.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -14,6 +14,7 @@
       this.index = -1;
       this._loop_mode = 0;
       this._media_uri_list = {};
+      this._play_error_retry_count = {};
       this.playedFrom = 0;
       this.mode = 'background';
       this.skipTime = 15;
@@ -277,6 +278,7 @@
           mute: self.muted,
           html5: true, // Force to HTML5 so that the audio can stream in (best for large files).
           onplay() {
+            delete self._play_error_retry_count[data.id];
             if ('mediaSession' in navigator) {
               const { mediaSession } = navigator;
               mediaSession.playbackState = 'playing';
@@ -341,12 +343,31 @@
             delete self._media_uri_list[data.id];
           },
           onplayerror(id, err) {
-            playerSendMessage(this.mode, {
+            playerSendMessage(self.mode, {
               type: 'BG_PLAYER:PLAY_FAILED',
               data: err,
             });
-            self.currentAudio.disabled = true;
             self.sendPlayingEvent('err');
+
+            if (data.howl) {
+              data.howl.unload();
+              data.howl = null;
+            }
+            delete self._media_uri_list[data.id];
+            if (data.url) {
+              delete self._media_uri_list[data.url];
+            }
+
+            const retryCount = self._play_error_retry_count[data.id] || 0;
+            const isCurrentTrack = self.currentAudio?.id === data.id;
+            if (isCurrentTrack && retryCount < 1) {
+              self._play_error_retry_count[data.id] = retryCount + 1;
+              self.currentAudio.disabled = false;
+              self.retrieveMediaUrl(index, true);
+              return;
+            }
+
+            data.disabled = true;
           },
         });
       }

@@ -26,8 +26,8 @@ function getFrontPlayer() {
 // host). Inside the host the real player is a local object, so none of the
 // proxying applies.
 const IS_OFFSCREEN_HOST =
-  typeof location !== 'undefined' &&
-  location.pathname.indexOf('offscreen.html') !== -1;
+  typeof window !== 'undefined' &&
+  window.location.pathname.indexOf('offscreen.html') !== -1;
 
 function isManifestV3() {
   try {
@@ -186,7 +186,10 @@ function buildOffscreenProxy() {
         }
         return;
       }
-      sendRuntimeMessage({ type: 'L1_PLAYER_CMD', method, args });
+      // The AUDIO_PLAYBACK offscreen document is reclaimed after it has been
+      // silent for a while. Route commands through the service worker so it
+      // can recreate the document before forwarding the command.
+      sendRuntimeMessage({ type: 'L1_PLAYER_COMMAND', method, args });
     };
   });
 
@@ -216,7 +219,7 @@ function buildOffscreenProxy() {
         return;
       }
       sendRuntimeMessage({
-        type: 'L1_PLAYER_CMD',
+        type: 'L1_PLAYER_COMMAND',
         method: 'set:volume',
         args: [val],
       });
@@ -232,7 +235,7 @@ function buildOffscreenProxy() {
         return;
       }
       sendRuntimeMessage({
-        type: 'L1_PLAYER_CMD',
+        type: 'L1_PLAYER_COMMAND',
         method: 'set:loop_mode',
         args: [val],
       });
@@ -254,7 +257,10 @@ function initOffscreenBridge() {
   (chrome || browser).runtime.onMessage.addListener((msg) => {
     if (msg && typeof msg.type === 'string') {
       if (msg.type === 'BG_PLAYER:OFFSCREEN_READY') {
-        sendRuntimeMessage({ type: 'L1_PLAYER_CMD', method: 'connectPlayer' });
+        sendRuntimeMessage({
+          type: 'L1_PLAYER_COMMAND',
+          method: 'connectPlayer',
+        });
       } else if (msg.type.indexOf('BG_PLAYER:') === 0) {
         updateMirrorFromEvent(msg);
       }

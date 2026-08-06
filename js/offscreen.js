@@ -10,7 +10,8 @@ AUDIO_PLAYBACK reason, and it outlives the UI tab.
 
 Protocol
 --------
-UI -> here   : { type: 'L1_PLAYER_CMD', method, args }   (fire and forget)
+UI -> worker : { type: 'L1_PLAYER_COMMAND', method, args }
+worker -> here: { type: 'L1_PLAYER_CMD', method, args }  (fire and forget)
 UI -> here   : { type: 'L1_PLAYER_SNAPSHOT' }            (expects a response)
 here -> UI   : { type: 'BG_PLAYER:*' }                   (unchanged, via
                playerSendMessage in bridge.js -> runtime.sendMessage)
@@ -119,10 +120,11 @@ function handleConnect(player) {
     if (!player.playlist.length) {
       const localCurrentPlaying = localStorage.getObject('current-playing');
       if (localCurrentPlaying !== null && localCurrentPlaying !== undefined) {
-        localCurrentPlaying.forEach((i) => {
-          i.disabled = false;
-        });
-        player.setNewPlaylist(localCurrentPlaying);
+        const restoredPlaylist = localCurrentPlaying.map((track) => ({
+          ...track,
+          disabled: false,
+        }));
+        player.setNewPlaylist(restoredPlaylist);
       }
     }
 
@@ -182,7 +184,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (method && method.startsWith('set:')) {
     const prop = method.slice(4);
     if (ALLOWED_SETTERS.includes(prop)) {
-      player[prop] = args[0];
+      const [value] = args;
+      player[prop] = value;
       broadcastSnapshot();
     }
     return undefined;
@@ -199,6 +202,4 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // The UI may have opened before this document finished loading, in which case
 // it already sent its snapshot request and got nothing back. Announce
 // readiness so it can re-sync.
-chrome.runtime
-  .sendMessage({ type: 'BG_PLAYER:OFFSCREEN_READY' })
-  .catch(() => {});
+chrome.runtime.sendMessage({ type: 'L1_OFFSCREEN_READY' }).catch(() => {});
