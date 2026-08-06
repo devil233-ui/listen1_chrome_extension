@@ -118,9 +118,10 @@ await new Promise((resolve) => setImmediate(resolve));
 assert.equal(
   JSON.stringify(receivedOffscreenCommands),
   JSON.stringify([
+    { type: 'L1_PLAYER_CMD', method: 'connectPlayer', args: [] },
     { type: 'L1_PLAYER_CMD', method: 'togglePlayPause', args: [] },
   ]),
-  'a command after the offscreen player was reclaimed should recreate it and dispatch once'
+  'a reclaimed player should restore its playlist before receiving the resume command'
 );
 
 console.log('PASS: paused offscreen player is recreated before the resume command');

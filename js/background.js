@@ -314,6 +314,29 @@ async function ensureAndDispatchPlayerCommands() {
   }
 }
 
+async function handleOffscreenReady() {
+  waitingForOffscreenReady = false;
+
+  // A newly created player has no playlist. Restore it before replaying the
+  // command that woke the service worker, otherwise togglePlayPause runs
+  // against an empty player.
+  try {
+    await chrome.runtime.sendMessage({
+      type: 'L1_PLAYER_CMD',
+      method: 'connectPlayer',
+      args: [],
+    });
+  } catch (err) {
+    // The readiness message proves the receiver exists. Some Chromium builds
+    // still reject fire-and-forget messages when no response is sent.
+  }
+
+  await ensureAndDispatchPlayerCommands();
+  chrome.runtime
+    .sendMessage({ type: 'BG_PLAYER:OFFSCREEN_READY' })
+    .catch(() => {});
+}
+
 // The UI asks for the offscreen document to exist before it sends any player
 // command. Kept separate from the 'code' listener above so the OAuth path is
 // untouched.
@@ -336,11 +359,7 @@ chrome.runtime.onMessage.addListener((request) => {
   }
 
   if (request.type === 'L1_OFFSCREEN_READY') {
-    waitingForOffscreenReady = false;
-    ensureAndDispatchPlayerCommands();
-    chrome.runtime
-      .sendMessage({ type: 'BG_PLAYER:OFFSCREEN_READY' })
-      .catch(() => {});
+    handleOffscreenReady();
     return undefined;
   }
 

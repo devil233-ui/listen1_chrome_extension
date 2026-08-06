@@ -81,6 +81,13 @@ const context = {
     },
   },
   navigator: { mediaSession },
+  localStorage: {
+    getObject() {
+      return null;
+    },
+    setObject() {},
+    removeItem() {},
+  },
   playerSendMessage() {},
   setInterval() {
     return 1;

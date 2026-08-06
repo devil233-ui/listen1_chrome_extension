@@ -50,6 +50,43 @@
       return !!Howler._muted;
     }
 
+    static getResumePosition(trackId) {
+      const savedPosition = localStorage.getObject('player-resume-position');
+      if (
+        !savedPosition ||
+        savedPosition.id !== trackId ||
+        typeof savedPosition.position !== 'number' ||
+        savedPosition.position < 0
+      ) {
+        return null;
+      }
+      return savedPosition.position;
+    }
+
+    saveResumePosition() {
+      if (!this.currentAudio || !this.currentHowl) {
+        return;
+      }
+
+      const position = this.currentHowl.seek();
+      if (typeof position !== 'number' || position < 0) {
+        return;
+      }
+
+      localStorage.setObject('player-resume-position', {
+        id: this.currentAudio.id,
+        position,
+      });
+    }
+
+    static clearResumePosition(trackId) {
+      const savedPosition = localStorage.getObject('player-resume-position');
+      if (!savedPosition || (trackId && savedPosition.id !== trackId)) {
+        return;
+      }
+      localStorage.removeItem('player-resume-position');
+    }
+
     insertAudio(audio, idx) {
       if (this.playlist.find((i) => audio.id === i.id)) return;
 
@@ -150,6 +187,7 @@
 
     clearPlaylist() {
       this.stopAll(); // stop the loadded track before remove list
+      Player.clearResumePosition();
       this.playlist = [];
       Howler.unload();
       this.sendPlaylistEvent();
@@ -167,6 +205,9 @@
     setNewPlaylist(list) {
       if (list.length) {
         // stop current
+        if (this.playlist.length) {
+          Player.clearResumePosition();
+        }
         this.stopAll();
         Howler.unload();
 
@@ -266,6 +307,7 @@
 
     finishLoad(index, playNow) {
       const data = this.playlist[index];
+      const resumePosition = Player.getResumePosition(data.id);
 
       // If we already loaded this track, use the current one.
       // Otherwise, setup and load a new Howl.
@@ -278,6 +320,7 @@
           mute: self.muted,
           html5: true, // Force to HTML5 so that the audio can stream in (best for large files).
           onplay() {
+            Player.clearResumePosition(data.id);
             delete self._play_error_retry_count[data.id];
             if ('mediaSession' in navigator) {
               const { mediaSession } = navigator;
@@ -306,6 +349,7 @@
             self.sendPlayingEvent('Loaded');
           },
           onend() {
+            Player.clearResumePosition(data.id);
             switch (self.loop_mode) {
               case 2:
                 self.skip('random');
@@ -323,6 +367,7 @@
             self.sendPlayingEvent('Ended');
           },
           onpause() {
+            self.saveResumePosition();
             navigator.mediaSession.playbackState = 'paused';
             self.sendPlayingEvent('Paused');
           },
@@ -381,6 +426,9 @@
             i.howl.stop();
           }
         });
+        if (resumePosition !== null) {
+          this.currentHowl.seek(resumePosition);
+        }
         this.currentHowl.play();
       }
     }
@@ -400,6 +448,7 @@
      * @param  {String} direction 'next' or 'prev'.
      */
     skip(direction) {
+      Player.clearResumePosition();
       Howler.unload();
       // Get the next track based on the direction of the track.
       const nextIndexFn = (idx) => {
