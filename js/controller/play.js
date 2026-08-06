@@ -520,6 +520,8 @@ angular.module('listenone').controller('PlayController', [
             // 'currentTrack:position'
             // update lyric position
             if (!l1Player.status.playing.id) break;
+            // Recreated players emit an empty frame before restored media metadata arrives.
+            if (msg.data.duration === 0) break;
             const currentSeconds = msg.data.pos;
             let lastObject = null;
             let lastObjectTrans = null;
@@ -640,10 +642,10 @@ angular.module('listenone').controller('PlayController', [
             $scope.currentPlaying.platformText = i18next.t(
               $scope.currentPlaying.platform
             );
-            $scope.myProgress = 0;
             if ($scope.lastTrackId === msg.data.currentPlaying.id) {
               break;
             }
+            $scope.myProgress = 0;
             const current = localStorage.getObject('player-settings') || {};
             current.nowplaying_track_id = msg.data.currentPlaying.id;
             localStorage.setObject('player-settings', current);

@@ -202,7 +202,7 @@
       });
     }
 
-    setNewPlaylist(list) {
+    setNewPlaylist(list, initialTrackId) {
       if (list.length) {
         // stop current
         if (this.playlist.length) {
@@ -215,9 +215,12 @@
           ...audio,
           howl: null,
         }));
+        const initialIndex = this.playlist.findIndex(
+          (audio) => audio.id === initialTrackId
+        );
         // TODO: random mode need random choose first song to load
-        this.index = 0;
-        this.load(0);
+        this.index = initialIndex >= 0 ? initialIndex : 0;
+        this.load(this.index);
       }
       this.sendPlaylistEvent();
     }
@@ -320,7 +323,6 @@
           mute: self.muted,
           html5: true, // Force to HTML5 so that the audio can stream in (best for large files).
           onplay() {
-            Player.clearResumePosition(data.id);
             delete self._play_error_retry_count[data.id];
             if ('mediaSession' in navigator) {
               const { mediaSession } = navigator;
@@ -620,18 +622,40 @@
     }
 
     async sendFrameUpdate() {
+      const duration = this.currentHowl ? this.currentHowl.duration() : 0;
+      let pos = this.currentHowl ? this.currentHowl.seek() : 0;
+      const currentTrackId = this.currentAudio?.id;
+      const resumePosition = currentTrackId
+        ? Player.getResumePosition(currentTrackId)
+        : null;
+
+      if (
+        this.currentHowl &&
+        resumePosition !== null &&
+        (typeof pos !== 'number' || pos + 0.25 < resumePosition)
+      ) {
+        this.currentHowl.seek(resumePosition);
+        pos = resumePosition;
+      } else if (this.currentHowl && resumePosition !== null) {
+        Player.clearResumePosition(currentTrackId);
+      }
+
       const data = {
         id: this.currentAudio ? this.currentAudio.id : 0,
-        duration: this.currentHowl ? this.currentHowl.duration() : 0,
-        pos: this.currentHowl ? this.currentHowl.seek() : 0,
+        duration,
+        pos,
         playedFrom: this.playedFrom,
         playing: this.playing,
       };
-      if ('setPositionState' in navigator.mediaSession) {
+      if (
+        'setPositionState' in navigator.mediaSession &&
+        duration > 0 &&
+        typeof pos === 'number'
+      ) {
         navigator.mediaSession.setPositionState({
-          duration: this.currentHowl ? this.currentHowl.duration() : 0,
+          duration,
           playbackRate: this.currentHowl ? this.currentHowl.rate() : 1,
-          position: this.currentHowl ? this.currentHowl.seek() : 0,
+          position: Math.min(pos, duration),
         });
       }
 

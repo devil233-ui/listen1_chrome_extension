@@ -9,6 +9,7 @@
     "check-offscreen-resume": "node scripts/check-offscreen-resume.mjs",
     "check-player-resume": "node scripts/check-player-resume.mjs",
     "check-player-position-resume": "node scripts/check-player-position-resume.mjs",
+    "check-progress-restore": "node scripts/check-progress-restore.mjs",
     "check-qq-lyric-fallback": "node scripts/check-qq-lyric-fallback.mjs",
     "lint": "eslint js --ext .js",
     "stamp-version": "node scripts/stamp-build-version.mjs",

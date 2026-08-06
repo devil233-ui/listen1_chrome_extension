@@ -10,6 +10,10 @@ const backgroundSource = fs.readFileSync(
   new URL('../js/background.js', import.meta.url),
   'utf8'
 );
+const offscreenSource = fs.readFileSync(
+  new URL('../js/offscreen.js', import.meta.url),
+  'utf8'
+);
 
 function createRuntime() {
   const listeners = [];
@@ -122,6 +126,72 @@ assert.equal(
     { type: 'L1_PLAYER_CMD', method: 'togglePlayPause', args: [] },
   ]),
   'a reclaimed player should restore its playlist before receiving the resume command'
+);
+
+let offscreenListener;
+const restoreCalls = [];
+const restoredPlaylist = [
+  { id: 'first-track', title: 'First' },
+  { id: 'resume-track', title: 'Resume' },
+];
+const offscreenPlayer = {
+  playing: false,
+  muted: false,
+  volume: 1,
+  loop_mode: 0,
+  index: -1,
+  playlist: [],
+  get currentAudio() {
+    return this.playlist[this.index] || null;
+  },
+  setNewPlaylist(list, initialTrackId) {
+    restoreCalls.push({ initialTrackId });
+    this.playlist = list;
+    const selectedIndex = list.findIndex((track) => track.id === initialTrackId);
+    this.index = selectedIndex >= 0 ? selectedIndex : 0;
+  },
+  loadById(id) {
+    this.index = this.playlist.findIndex((track) => track.id === id);
+  },
+  sendPlaylistEvent() {},
+  sendPlayingEvent() {},
+  sendLoadEvent() {},
+  sendVolumeEvent() {},
+};
+const offscreenContext = {
+  setPrototypeOfLocalStorage() {},
+  playerSendMessage() {},
+  localStorage: {
+    getObject(key) {
+      if (key === 'current-playing') return restoredPlaylist;
+      if (key === 'player-settings') {
+        return { nowplaying_track_id: 'resume-track' };
+      }
+      return null;
+    },
+  },
+  window: { threadPlayer: offscreenPlayer },
+  chrome: {
+    runtime: {
+      onMessage: {
+        addListener(listener) {
+          offscreenListener = listener;
+        },
+      },
+      sendMessage() {
+        return Promise.resolve();
+      },
+    },
+  },
+};
+vm.runInNewContext(offscreenSource, offscreenContext, {
+  filename: 'offscreen.js',
+});
+offscreenListener({ type: 'L1_PLAYER_CMD', method: 'connectPlayer', args: [] });
+assert.equal(
+  restoreCalls[0].initialTrackId,
+  'resume-track',
+  'offscreen restore should select the saved track before emitting LOAD'
 );
 
 console.log('PASS: paused offscreen player is recreated before the resume command');

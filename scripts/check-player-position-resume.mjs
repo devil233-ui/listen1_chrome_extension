@@ -7,7 +7,10 @@ const source = fs.readFileSync(
   'utf8'
 );
 
-function createPlayerContext(storage) {
+function createPlayerContext(storage, options = {}) {
+  const messages = [];
+  let ignoredRestoreSeek = false;
+
   class FakeHowl {
     constructor(options) {
       this.options = options;
@@ -44,6 +47,14 @@ function createPlayerContext(storage) {
 
     seek(position) {
       if (typeof position === 'number') {
+        if (
+          options.ignoreFirstRestoreSeek &&
+          position > 0 &&
+          !ignoredRestoreSeek
+        ) {
+          ignoredRestoreSeek = true;
+          return this.position;
+        }
         this.position = position;
       }
       return this.position;
@@ -91,7 +102,9 @@ function createPlayerContext(storage) {
         setPositionState() {},
       },
     },
-    playerSendMessage() {},
+    playerSendMessage(mode, message) {
+      messages.push(message);
+    },
     setInterval() {
       return 1;
     },
@@ -100,7 +113,7 @@ function createPlayerContext(storage) {
   };
 
   vm.runInNewContext(source, context, { filename: 'player_thread.js' });
-  return context.window.threadPlayer;
+  return { player: context.window.threadPlayer, messages };
 }
 
 const sharedStorage = {};
@@ -111,7 +124,7 @@ const track = {
   artist: 'Listen 1',
 };
 
-const pausedPlayer = createPlayerContext(sharedStorage);
+const { player: pausedPlayer } = createPlayerContext(sharedStorage);
 pausedPlayer.setNewPlaylist([track]);
 pausedPlayer.play();
 pausedPlayer.currentHowl.seek(42);
@@ -123,14 +136,50 @@ assert.equal(
   'pausing should persist the current track and its playback position'
 );
 
-const restoredPlayer = createPlayerContext(sharedStorage);
+const { player: restoredPlayer, messages } = createPlayerContext(
+  sharedStorage,
+  { ignoreFirstRestoreSeek: true }
+);
 restoredPlayer.setNewPlaylist([track]);
 restoredPlayer.play();
+restoredPlayer.sendFrameUpdate();
+
+const frame = messages.findLast(
+  (message) => message.type === 'BG_PLAYER:FRAME_UPDATE'
+);
 
 assert.equal(
   restoredPlayer.currentHowl.seek(),
   42,
   'a recreated player should resume from the persisted pause position'
+);
+assert.equal(
+  frame.data.pos,
+  42,
+  'the first visible frame should use the restored position instead of 0'
+);
+
+restoredPlayer.sendFrameUpdate();
+assert.equal(
+  sharedStorage['player-resume-position'],
+  undefined,
+  'the saved position should clear after the player confirms restoration'
+);
+
+const restorePlaylist = [
+  { ...track, id: 'first-track' },
+  track,
+];
+const { player: playlistPlayer, messages: playlistMessages } =
+  createPlayerContext({});
+playlistPlayer.setNewPlaylist(restorePlaylist, 'resume-track');
+const firstLoad = playlistMessages.find(
+  (message) => message.type === 'BG_PLAYER:LOAD'
+);
+assert.equal(
+  firstLoad.data.currentPlaying.id,
+  'resume-track',
+  'restoring a playlist should load the saved track before emitting LOAD'
 );
 
 console.log('PASS: a reclaimed player restores the paused playback position');

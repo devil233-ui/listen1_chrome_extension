@@ -117,6 +117,9 @@ function handleToggle(player, method) {
 // player.playing and player.playlist.length before deciding what to restore.
 function handleConnect(player) {
   if (!player.playing) {
+    const localPlayerSettings = localStorage.getObject('player-settings');
+    const restoredTrackId = localPlayerSettings?.nowplaying_track_id;
+
     if (!player.playlist.length) {
       const localCurrentPlaying = localStorage.getObject('current-playing');
       if (localCurrentPlaying !== null && localCurrentPlaying !== undefined) {
@@ -124,13 +127,15 @@ function handleConnect(player) {
           ...track,
           disabled: false,
         }));
-        player.setNewPlaylist(restoredPlaylist);
+        player.setNewPlaylist(restoredPlaylist, restoredTrackId);
       }
     }
 
-    const localPlayerSettings = localStorage.getObject('player-settings');
-    if (localPlayerSettings !== null && localPlayerSettings !== undefined) {
-      player.loadById(localPlayerSettings.nowplaying_track_id);
+    if (
+      restoredTrackId !== undefined &&
+      player.currentAudio?.id !== restoredTrackId
+    ) {
+      player.loadById(restoredTrackId);
     }
   }
 
