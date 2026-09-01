@@ -2,12 +2,6 @@
 /* eslint-disable no-unused-vars */
 /* global getParameterByName forge */
 /* global isElectron cookieSet cookieGet cookieRemove async */
-
-// 网易云 www 入口（music.163.com）在部分网络环境下会被针对性阻断 TLS 握手，
-// 表现为整站接口超时而同后端的 interface 域名正常。
-// 统一走官方 App 接口域名，接口路径与返回结构完全一致。
-const NETEASE_API_HOST = 'https://interface3.music.163.com';
-
 class netease {
   static _create_secret_key(size) {
     const result = [];
@@ -87,7 +81,7 @@ class netease {
         success: (fn) => fn({ result: [] }),
       };
     }
-    const url = `${NETEASE_API_HOST}/weapi/toplist/detail`;
+    const url = 'https://music.163.com/weapi/toplist/detail';
     const data = this.weapi({});
     return {
       success: (fn) => {
@@ -123,9 +117,9 @@ class netease {
     }
     let target_url = '';
     if (offset != null) {
-      target_url = `${NETEASE_API_HOST}/discover/playlist/?order=${order}${filter}&limit=35&offset=${offset}`;
+      target_url = `https://music.163.com/discover/playlist/?order=${order}${filter}&limit=35&offset=${offset}`;
     } else {
-      target_url = `${NETEASE_API_HOST}/discover/playlist/?order=${order}${filter}`;
+      target_url = `https://music.163.com/discover/playlist/?order=${order}${filter}`;
     }
 
     return {
@@ -165,7 +159,7 @@ class netease {
   }
 
   static ne_ensure_cookie(callback) {
-    const domain = NETEASE_API_HOST;
+    const domain = 'https://music.163.com';
     const nuidName = '_ntes_nuid';
     const nnidName = '_ntes_nnid3';
     const nuidValue = this._create_secret_key(32);
@@ -241,7 +235,7 @@ class netease {
   }
 
   static ng_render_playlist_result_item(index, item, callback) {
-    const target_url = `${NETEASE_API_HOST}/weapi/v3/song/detail`;
+    const target_url = 'https://music.163.com/weapi/v3/song/detail';
     const queryIds = [item.id];
     const d = {
       c: `[${queryIds.map((id) => `{"id":${id}}`).join(',')}]`,
@@ -269,7 +263,7 @@ class netease {
   }
 
   static ng_parse_playlist_tracks(playlist_tracks, callback) {
-    const target_url = `${NETEASE_API_HOST}/weapi/v3/song/detail`;
+    const target_url = 'https://music.163.com/weapi/v3/song/detail';
     const track_ids = playlist_tracks.map((i) => i.id);
     const d = {
       c: `[${track_ids.map((id) => `{"id":${id}}`).join(',')}]`,
@@ -309,7 +303,7 @@ class netease {
     return {
       success: (fn) => {
         const list_id = getParameterByName('list_id', url).split('_').pop();
-        const target_url = `${NETEASE_API_HOST}/weapi/v3/playlist/detail`;
+        const target_url = 'https://music.163.com/weapi/v3/playlist/detail';
         const d = {
           id: list_id,
           offset: 0,
@@ -406,7 +400,7 @@ class netease {
 
   static search(url) {
     // use chrome extension to modify referer.
-    const target_url = `${NETEASE_API_HOST}/api/search/pc`;
+    const target_url = 'https://music.163.com/api/search/pc';
     const keyword = getParameterByName('keywords', url);
     const curpage = getParameterByName('curpage', url);
     const searchType = getParameterByName('type', url);
@@ -479,7 +473,7 @@ class netease {
   static ne_album(url) {
     const album_id = getParameterByName('list_id', url).split('_').pop();
     // use chrome extension to modify referer.
-    const target_url = `${NETEASE_API_HOST}/api/album/${album_id}`;
+    const target_url = `https://music.163.com/api/album/${album_id}`;
 
     return {
       success: (fn) => {
@@ -516,7 +510,7 @@ class netease {
   static ne_artist(url) {
     const artist_id = getParameterByName('list_id', url).split('_').pop();
     // use chrome extension to modify referer.
-    const target_url = `${NETEASE_API_HOST}/api/artist/${artist_id}`;
+    const target_url = `https://music.163.com/api/artist/${artist_id}`;
 
     return {
       success: (fn) => {
@@ -554,7 +548,7 @@ class netease {
   static lyric(url) {
     const track_id = getParameterByName('track_id', url).split('_').pop();
     // use chrome extension to modify referer.
-    const target_url = `${NETEASE_API_HOST}/weapi/song/lyric?csrf_token=`;
+    const target_url = 'https://music.163.com/weapi/song/lyric?csrf_token=';
     const csrf = '';
     const d = {
       id: track_id,
@@ -755,7 +749,7 @@ class netease {
 
   static login(url) {
     // use chrome extension to modify referer.
-    let target_url = `${NETEASE_API_HOST}/weapi/login`;
+    let target_url = 'https://music.163.com/weapi/login';
     const loginType = getParameterByName('type', url);
 
     const password = getParameterByName('password', url);
@@ -774,7 +768,7 @@ class netease {
         rememberLogin: 'true',
       };
     } else if (loginType === 'phone') {
-      target_url = `${NETEASE_API_HOST}/weapi/login/cellphone`;
+      target_url = `https://music.163.com/weapi/login/cellphone`;
       const countrycode = getParameterByName('countrycode', url);
       const phone = getParameterByName('phone', url);
       req_data = {
@@ -795,7 +789,7 @@ class netease {
 
     cookieSet(
       {
-        url: NETEASE_API_HOST,
+        url: 'https://music.163.com',
         name: 'os',
         value: 'pc',
         expirationDate: expire,
@@ -834,7 +828,7 @@ class netease {
 
   static get_user_playlist(url, playlistType) {
     const user_id = getParameterByName('user_id', url);
-    const target_url = `${NETEASE_API_HOST}/api/user/playlist`;
+    const target_url = 'https://music.163.com/api/user/playlist';
 
     const req_data = {
       uid: user_id,
@@ -884,7 +878,7 @@ class netease {
   }
 
   static get_recommend_playlist() {
-    const target_url = `${NETEASE_API_HOST}/weapi/personalized/playlist`;
+    const target_url = 'https://music.163.com/weapi/personalized/playlist';
 
     const req_data = {
       limit: 30,
@@ -921,7 +915,7 @@ class netease {
   }
 
   static get_user() {
-    const url = `${NETEASE_API_HOST}/api/nuser/account/get`;
+    const url = `https://music.163.com/api/nuser/account/get`;
 
     const encrypt_req_data = this.weapi({});
     return {
@@ -959,7 +953,7 @@ class netease {
   static logout() {
     cookieRemove(
       {
-        url: NETEASE_API_HOST,
+        url: 'https://music.163.com',
         name: 'MUSIC_U',
       },
       (cookie) => {}
