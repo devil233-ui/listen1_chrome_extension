@@ -189,6 +189,7 @@ class netease {
                 value: nuidValue,
                 expirationDate: expire,
                 sameSite: 'no_restriction',
+                secure: true,
               },
               {
                 url: domain,
@@ -196,6 +197,7 @@ class netease {
                 value: nnidValue,
                 expirationDate: expire,
                 sameSite: 'no_restriction',
+                secure: true,
               },
               {
                 url: domain,
@@ -203,6 +205,7 @@ class netease {
                 value: nmtidValue,
                 expirationDate: expire,
                 sameSite: 'no_restriction',
+                secure: true,
               },
             ],
             cookieSet,
