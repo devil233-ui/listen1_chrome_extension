@@ -11,7 +11,6 @@
     "check-player-position-resume": "node scripts/check-player-position-resume.mjs",
     "check-progress-restore": "node scripts/check-progress-restore.mjs",
     "check-qq-lyric-fallback": "node scripts/check-qq-lyric-fallback.mjs",
-    "check-qq-play-url": "node scripts/check-qq-play-url.mjs",
     "lint": "eslint js --ext .js",
     "stamp-version": "node scripts/stamp-build-version.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
