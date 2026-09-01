@@ -489,7 +489,14 @@ class qq {
         failure(sound);
         return;
       }
-      const url = data.req_1.data.sip[0] + purl;
+      // QQ 的 sip 列表通常只给 http:// 前缀，而扩展页面属于安全上下文，
+      // http 音频会被浏览器按混合内容直接拦截，导致点播放没有任何声音。
+      // 这些 CDN 同时支持 https，统一升级协议后再拼接。
+      const sipList = data.req_1.data.sip || [];
+      const secureSip =
+        sipList.find((item) => item.startsWith('https://')) ||
+        (sipList[0] || '').replace(/^http:\/\//, 'https://');
+      const url = secureSip + purl;
       sound.url = url;
       const prefix = purl.slice(0, 4);
       const found = Object.values(fileConfig).filter((i) => i.s === prefix);
@@ -548,8 +555,7 @@ class qq {
       return new TextDecoder('utf-8').decode(bytes);
     };
     return {
-      success: (fn) => {
-        return axios.post(target_url, request_data).then((response) => {
+      success: (fn) => axios.post(target_url, request_data).then((response) => {
           const lyric_response = response.data && response.data.req_1;
           const data = lyric_response && lyric_response.data;
           const lrc = decode_lyric(data && data.lyric);
@@ -558,8 +564,7 @@ class qq {
             lyric: lrc,
             tlyric: tlrc,
           });
-        });
-      },
+        }),
     };
   }
 
